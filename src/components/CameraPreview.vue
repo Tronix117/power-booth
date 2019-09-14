@@ -53,7 +53,6 @@ export default class CameraPreview extends Vue {
       video.src = URL.createObjectURL(this.mediaSource);
 
       this.mediaSource.addEventListener('sourceopen', () => {
-        video.play();
         console.log('sourceOpen')
         this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
         this.sourceBuffer.addEventListener('updateend', function(e) {
@@ -63,6 +62,7 @@ export default class CameraPreview extends Vue {
         }, false);
         ipcRenderer.send('stream:open');
       }, false);
+      setTimeout(() => video.play().catch((err) => console.error(err)), 500);
     }
     
   }

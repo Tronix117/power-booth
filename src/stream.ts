@@ -42,10 +42,7 @@ function handleChunk(data) {
   }
 }
 
-ipcMain.on('stream:open', (e) => {
-  
-  renderer = e.sender;
-  ffmpeg(inputStream)
+ffmpeg(inputStream)
     .outputOption('-threads 1')
     .inputOption('-re')
     .inputOption('-r 1')
@@ -71,7 +68,10 @@ ipcMain.on('stream:open', (e) => {
       console.error('Video created in:', output)
     })
     .pipe(targetStream);
-    
+
+ipcMain.on('stream:open', (e) => {
+  renderer = e.sender;
+  
   if (moov) {
     console.log('Sending ftyp and moov segments to client.');
   
@@ -79,7 +79,6 @@ ipcMain.on('stream:open', (e) => {
     ftyp_moov.set(ftyp, 0);
     ftyp_moov.set(moov, ftyp.length);
     renderer.send('stream', ftyp_moov);
-    
   }
 })
 
