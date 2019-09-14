@@ -1,6 +1,6 @@
 <template>
   <div>
-    <video ref='video' width="100%"></video>
+    <video controls ref='video' width="100%" height="100%"></video>
   </div>
 </template>
 
@@ -18,10 +18,7 @@ export default class CameraPreview extends Vue {
 
   sourceBuffer: SourceBuffer
   mediaSource: MediaSource
-
-  buffer_size = 5*1024*1024;
-  buffer_index = 0;
-  frag_mp4_buffer = new Uint8Array(this.buffer_size);
+  queue: any[]
 
   created() {
     this.onStreamChunk = this.onStreamChunk.bind(this);
@@ -33,9 +30,11 @@ export default class CameraPreview extends Vue {
     ipcRenderer.on('stream', this.onStreamChunk);
     // this.$refs.video.srcObject = this.mediaSource;
 
-    const mimeCodec = 'video/mp4; codecs="avc1.640028, mp4a.40.2"';
+    const mimeCodec = 'video/mp4; codecs="avc1.42C028"';
     
     if(MediaSource.isTypeSupported(mimeCodec)) {
+      this.queue = []
+
       this.mediaSource = new MediaSource()
       this.mediaSource.addEventListener('sourceended', (e) => {
         console.log('sourceended: ' + this.mediaSource.readyState);
@@ -55,16 +54,22 @@ export default class CameraPreview extends Vue {
       this.mediaSource.addEventListener('sourceopen', () => {
         console.log('sourceOpen')
         this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeCodec);
-        this.sourceBuffer.addEventListener('updateend', function(e) {
-          if (video.duration && !video.currentTime) {
-            video.currentTime = video.duration;
-          }
-        }, false);
+        this.sourceBuffer.mode = 'sequence';
+
+        this.sourceBuffer.addEventListener('updateend', () => this._updateBuffer())
+        this.sourceBuffer.addEventListener('update', () => this._updateBuffer())
+        
         ipcRenderer.send('stream:open');
       }, false);
-      setTimeout(() => video.play().catch((err) => console.error(err)), 500);
+      // setTimeout(() => video.play().catch((err) => console.error(err)), 500);
     }
     
+  }
+
+  private _updateBuffer(){
+    if (this.queue.length > 0 && !this.sourceBuffer.updating) {
+        this.sourceBuffer.appendBuffer(this.queue.shift());
+    }
   }
 
   unmounted() {
@@ -72,18 +77,12 @@ export default class CameraPreview extends Vue {
   }
 
   onStreamChunk(e, data) {
-    console.log('data')
-    if(!this.sourceBuffer) return
-    if (data.length) {
-      if((this.buffer_index + data.length) <= this.buffer_size){
-        this.frag_mp4_buffer.set(data, this.buffer_index);
-        this.buffer_index = this.buffer_index + data.length;
-        if (!this.sourceBuffer.updating && this.mediaSource.readyState == 'open') {
-          var appended = this.frag_mp4_buffer.slice(0, this.buffer_index);
-          this.sourceBuffer.appendBuffer(appended);
-          this.frag_mp4_buffer.fill(0);
-          this.buffer_index = 0;
-        }
+    if(typeof data === 'object'){
+      if (this.sourceBuffer.updating || this.queue.length > 0) {
+          this.queue.push(data);
+      } else {
+          this.sourceBuffer.appendBuffer(data);
+          this.$refs.video.play();
       }
     }
   }
