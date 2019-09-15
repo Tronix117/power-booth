@@ -12,27 +12,19 @@
   },
   "main": "background.js",
   "dependencies": {
-    "@types/node": "^12.7.5",
     "big-integer": "^1.6.44",
     "core-js": "^2.6.5",
-    "express": "^4.17.1",
-    "ffi-napi": "^2.4.5",
-    "fluent-ffmpeg": "^2.1.2",
-    "multi-write-stream": "^2.0.1",
-    "ref-array-di": "^1.2.1",
-    "ref-napi": "^1.4.2",
-    "ref-struct-di": "^1.1.0",
-    "videoshow": "^0.1.11",
+    "rpi-gpio": "^2.1.4",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
     "vue-property-decorator": "^8.1.0",
     "vue-router": "^3.0.3",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "ffi-napi": "2.4.5",
+    "ref-napi": "1.4.2"
   },
   "devDependencies": {
-    "@types/ref-array-di": "^1.2.0",
-    "@types/ref-napi": "^1.4.0",
-    "@types/ref-struct-di": "^1.1.0",
+    "@types/node": "^12.7.5",
     "@vue/cli-plugin-babel": "^3.11.0",
     "@vue/cli-plugin-typescript": "^3.11.0",
     "@vue/cli-service": "^3.11.0",
@@ -43,7 +35,8 @@
     "sass-loader": "^7.1.0",
     "typescript": "^3.4.3",
     "vue-cli-plugin-electron-builder": "^1.4.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.10",
+    "vuex-module-decorators": "^0.10.1"
   },
   "postcss": {
     "plugins": {

@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import CameraPreview from '@/components/CameraPreview.vue'; // @ is an alias to /src
+import CameraPreview from '@/views/components/CameraPreview.vue'; // @ is an alias to /src
 
 @Component({
   components: {

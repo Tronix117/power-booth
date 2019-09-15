@@ -5,7 +5,6 @@ import {
   createProtocol,
   installVueDevtools
 } from "vue-cli-plugin-electron-builder/lib";
-import { streamTo } from './stream'
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -21,8 +20,8 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    fullscreen: true,
+    kiosk: !isDevelopment,
     webPreferences: {
       nodeIntegration: true
     }
@@ -37,8 +36,6 @@ function createWindow() {
     // Load the index.html when not in development
     win.loadURL("app://./index.html");
   }
-
-  streamTo(win.webContents);
 
   win.on("closed", () => {
     win = null;
@@ -96,25 +93,3 @@ if (isDevelopment) {
     });
   }
 }
-
-import path from "path";
-import { CameraList, closeQuietly } from "../lib/gphoto2/src";
-const cameraList = new CameraList().load();
-
-console.log("Nb camera", cameraList.size);
-
-if (cameraList.size) {
-  const camera = cameraList.getCamera(0)!;
-  console.log("Camera =>", camera);
-
-  const cameraFile = camera.captureImage();
-  if (cameraFile) {
-    console.log(__dirname, "capture.jpeg");
-    cameraFile.saveAsync(path.join(__dirname, "capture.jpeg"));
-
-    closeQuietly(cameraFile);
-  }
-  closeQuietly(camera);
-}
-
-cameraList.close();
