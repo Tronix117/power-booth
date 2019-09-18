@@ -175,14 +175,11 @@ export default class SettingPanel extends Vue {
 
   async autodetect() {
     this.autodetectInterval = setInterval(this.detect.bind(this), 2000);
-    await this.detect()
-    if (this.camerasInfo.length) {
-      cameraStore.selectCamera(this.camerasInfo[0].id);
-    }
+    await this.detect();
   }
 
-  detect(e?) {
-    return cameraStore.fetchCameras();
+  async detect(e?) {
+    return cameraStore.fetchCameras(true);
   }
 
   back(...args){ this.exit(...args) }
@@ -203,6 +200,9 @@ export default class SettingPanel extends Vue {
   width: 30%;
   height: 100%;
   color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(-20px);
+  box-shadow: 0px 0px 14px 16px rgba(0, 0, 0, 0.5);
 
   &__section {
 

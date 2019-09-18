@@ -5,15 +5,15 @@
     @keydown="onKeyDown"
     @keyup="onKeyUp"
   >
-    <CameraPreview
-      v-if="camera && liveviewEnabled"
-      :camera="camera"
-    />
-    <SettingPanel
-      ref="settingPanel"
-      v-show="settingPanelEnabled"
-      @close="settingPanelEnabled = false"
-    />
+    <CameraPreview v-if="camera && liveviewEnabled"/>
+    <Picture v-if="showPicture" :src="lastPicture" />
+    <transition name="slideLeft">
+      <SettingPanel
+        ref="settingPanel"
+        v-show="settingPanelEnabled"
+        @close="settingPanelEnabled = false"
+      />
+    </transition>
   </div>
 </template>
 
@@ -23,6 +23,7 @@ import Component from 'vue-class-component';
 import { ipcRenderer } from 'electron';
 import CameraPreview from '@/views/components/CameraPreview.vue';
 import SettingPanel from '@/views/components/SettingPanel.vue';
+import Picture from '@/views/components/Picture.vue';
 import { Camera, closeQuietly } from '@typedproject/gphoto2-driver/src';
 import { Dictionary } from 'vue-router/types/router';
 
@@ -35,15 +36,15 @@ export enum AppButtonAction {
 }
 
 const buttonActions: Dictionary<[number, number][]> = {
-  magic: [[3000, 10000]],//, [10, 500], [10, 500], [10, 500],
+  magic: [[2000, 10000]],//, [10, 500], [10, 500], [10, 500],
   trigger: [[10, 500]],
-  longTrigger: [[500, 3000]],
+  longTrigger: [[500, 2000]],
 }
 
 const buttonActionStepResetDuration = 5000;
 
 @Component({
-  components: { CameraPreview, SettingPanel },
+  components: { CameraPreview, SettingPanel, Picture },
 })
 export default class App extends Vue {
   $el: HTMLElement
@@ -59,6 +60,14 @@ export default class App extends Vue {
 
   settingPanelEnabled = false;
 
+  get showPicture() {
+    return cameraStore.isPictureLoading || cameraStore.lastPicture;
+  }
+
+  get lastPicture() {
+    return cameraStore.lastPictureEnhanced || cameraStore.lastPicture;
+  }
+
   get liveviewEnabled() {
     return settingStore.liveviewEnabled;
   }
@@ -70,6 +79,7 @@ export default class App extends Vue {
   mounted() {
     this.$el.focus();
     this.$on('action', this.onAction.bind(this));
+    // cameraStore.treatLastPicture('/Users/jeremyt/Development/PhotoBooth/power-booth/tmp/1568589121.802.jpg')
   }
 
   destroyed() {
@@ -92,7 +102,11 @@ export default class App extends Vue {
     switch (action) {
       case AppButtonAction.Trigger:
       case AppButtonAction.LongTrigger:
-        console.log('take picture !');
+        if (this.lastPicture) {
+          cameraStore.clearLastPicture()
+        } else {
+          cameraStore.takePicture();
+        }
         break;
     }
   }
@@ -171,5 +185,22 @@ export default class App extends Vue {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   background: #000000;
+}
+
+.slideLeft-leave-active,
+.slideLeft-enter-active {
+  transition: 300ms;
+}
+
+.slideLeft-enter {
+  transform: translate(100%, 0);
+}
+
+.slideLeft-leave-to {
+  transform: translate(-100%, 0);
+}
+
+body {
+  overflow: hidden;
 }
 </style>

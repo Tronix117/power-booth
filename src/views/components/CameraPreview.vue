@@ -1,6 +1,6 @@
 <template>
   <div class="CameraPreview">
-    <img class="CameraPreview__liveview" :src="imageSrc" />
+    <img v-show="imageSrc" class="CameraPreview__liveview" :src="imageSrc" />
   </div>
 </template>
 
@@ -8,32 +8,21 @@
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import path from "path";
 
-import Liveview, { LiveviewHandler } from '@/lib/liveview';
 import { Camera } from '@typedproject/gphoto2-driver/src';
+import { cameraStore } from '../../store';
 
 @Component
 export default class CameraPreview extends Vue {
-  imageSrc = ''
-  liveview: Liveview
-
-  @Prop()
-  camera: Camera;
-
-  created() {
-    this.onImageData = this.onImageData.bind(this);
-    this.liveview = Liveview.getInstanceForCamera(this.camera);
+  get imageSrc() {
+    return cameraStore.previewPicture;
   }
 
   mounted() {
-    this.liveview.listen(this.onImageData);
+    cameraStore.startLiveview();
   }
 
   destroyed() {
-    this.liveview.unlisten(this.onImageData);
-  }
-
-  onImageData(data) {
-    this.imageSrc = `data:image/png;base64,${data}`;
+    cameraStore.stopLiveview();
   }
 }
 </script>

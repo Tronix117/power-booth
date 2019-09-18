@@ -14,16 +14,19 @@
   "dependencies": {
     "big-integer": "^1.6.44",
     "core-js": "^2.6.5",
+    "ffi-napi": "2.4.5",
+    "gm": "^1.23.1",
+    "ref-napi": "1.4.2",
     "rpi-gpio": "^2.1.4",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
     "vue-property-decorator": "^8.1.0",
     "vue-router": "^3.0.3",
-    "vuex": "^3.0.1",
-    "ffi-napi": "2.4.5",
-    "ref-napi": "1.4.2"
+    "vue-spinner": "^1.0.3",
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
+    "@types/gm": "^1.18.4",
     "@types/node": "^12.7.5",
     "@vue/cli-plugin-babel": "^3.11.0",
     "@vue/cli-plugin-typescript": "^3.11.0",
