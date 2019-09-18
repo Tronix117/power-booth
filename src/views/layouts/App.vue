@@ -5,7 +5,7 @@
     @keydown="onKeyDown"
     @keyup="onKeyUp"
   >
-    <CameraPreview v-if="camera && liveviewEnabled"/>
+    <CameraPreview v-if="camera && liveviewEnabled" />
     <Picture v-if="showPicture" :src="lastPicture" />
     <transition name="slideLeft">
       <SettingPanel

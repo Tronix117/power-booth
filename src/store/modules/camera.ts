@@ -58,7 +58,7 @@ export default class CameraModule extends VuexModule {
 
     this.context.commit('setCamerasInfo', { camerasInfo });
 
-    if (!this.activeCamera && camerasInfo.length) {
+    if (autoSelect && !this.activeCamera && camerasInfo.length) {
       this.context.dispatch('selectCamera', camerasInfo[0].id);
     }
   }
@@ -149,6 +149,7 @@ export default class CameraModule extends VuexModule {
   @Action
   async takePicture() {
     this.context.commit('setIsPictureLoading', true);
+    await new Promise((r) => setTimeout(r, 50));
 
     let hadLiveview = !!this.liveview;
     if (hadLiveview) {
