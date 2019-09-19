@@ -1,6 +1,6 @@
 "use strict";
 
-import { app, protocol, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import {
   createProtocol,
   installVueDevtools
@@ -11,6 +11,7 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: BrowserWindow | null;
+let workerWin: BrowserWindow | null;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -20,7 +21,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    fullscreen: true,
+    fullscreen: false,
     kiosk: !isDevelopment,
     webPreferences: {
       nodeIntegration: true
@@ -37,10 +38,20 @@ function createWindow() {
     win.loadURL("app://./index.html");
   }
 
+  // Hack for worker, unable to find this info
+  (global as any).WEBPACK_DEV_SERVER_URL = process.env.WEBPACK_DEV_SERVER_URL
+
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('ready');
+  })
+
   win.on("closed", () => {
     win = null;
   });
+
+  return win;
 }
+
 
 // Quit when all windows are closed.
 app.on("window-all-closed", () => {
@@ -76,7 +87,8 @@ app.on("ready", async () => {
     //   console.error('Vue Devtools failed to install:', e.toString())
     // }
   }
-  createWindow();
+  
+  const mainWin = createWindow();
 });
 
 // Exit cleanly on request from parent process in development mode.

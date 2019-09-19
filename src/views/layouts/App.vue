@@ -29,6 +29,10 @@ import { Dictionary } from 'vue-router/types/router';
 
 import { cameraStore, settingStore } from '@/store';
 
+import CameraWorker from '@/worker/camera.worker';
+(window as any).cameraWorker = CameraWorker.create();
+(window as any).CameraWorker = CameraWorker;
+
 export enum AppButtonAction {
   Magic = 'magic',
   Trigger = 'trigger',

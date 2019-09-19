@@ -1,12 +1,26 @@
-import Vue from 'vue'
-import App from './views/layouts/App.vue'
-import router from './router'
-import store from './store'
+import { remote, ipcRenderer } from 'electron'
+import Worker from './lib/worker';
+import workerClasses from './worker';
 
-Vue.config.productionTip = false
-
-new Vue({
-  router,
-  store,
-  render: h => h(App)
-}).$mount('#app')
+ipcRenderer.on('ready', (event, { worker: workerSetting } = {}) => {
+  (window as any).win = remote.getCurrentWindow();
+  if (workerSetting) {
+    // const workerClass = require(worker.filepath) as any as (new (...args: any[]) => Worker);
+    const workerClass = workerClasses[workerSetting.className];
+    const worker = (window as any).worker = new workerClass(workerSetting.namespace, workerSetting.parentWebContentsId);
+    // (window as any).console = 
+  } else {
+    const Vue = require('vue').default;
+    const App = require('./views/layouts/App.vue').default;
+    const router = require('./router').default;
+    const store = require('./store').default;
+  
+    Vue.config.productionTip = false
+  
+    new Vue({
+      router,
+      store,
+      render: h => h(App)
+    }).$mount('#app')
+  }
+})
