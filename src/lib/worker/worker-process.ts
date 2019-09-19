@@ -1,10 +1,7 @@
 import { remote, BrowserWindow as TBrowserWindow, ipcRenderer } from 'electron';
+import { Worker, WorkerOption, WorkerAction, WorkerActionType } from './worker';
 const { BrowserWindow } = remote;
 const currentWindow = remote.getCurrentWindow();
-
-export interface WorkerOption {
-  namespace?: string;
-}
 
 export class WorkerProcess {
   readonly namespace: string;
@@ -60,7 +57,7 @@ export class WorkerProcess {
 
   protected async createWorkerWindow() {
     this._window = new BrowserWindow({
-      show: true,
+      show: false,
       webPreferences: {
         nodeIntegration: true
       }
@@ -90,6 +87,10 @@ export class WorkerProcess {
   }
 
   protected attachEvents() {
+    ipcRenderer.on('worker::console', (event, name, ...args) => {
+      console[name](`\x1b[1m\x1b[46m ❖ ${this.namespace} ❖ `, ...args);
+    })
+
     for (const name in this._workerClass.__workerActions) {
       this.addAction(name, this._workerClass.__workerActions[name]);
     }
@@ -135,88 +136,3 @@ export class WorkerProcess {
     }
   }
 }
-
-export enum WorkerActionType {
-  Immediate = 'Immediate',
-  Event = 'Event',
-}
-
-export interface WorkerAction {
-  type: WorkerActionType,
-}
-
-export abstract class Worker {
-  private readonly namespace;
-  private readonly _parentWebContentsId: number;
-  static __workerActions: {[actionName: string]: WorkerAction};
-
-  constructor(namespace: string, parentWebContentsId: number) {
-    this.namespace = namespace;
-    this._parentWebContentsId = parentWebContentsId;
-    this.attachEvents();
-  }
-
-  get selfClass(): typeof Worker {
-    return this.constructor as any
-  }
-
-  static create(options: WorkerOption = {}) {
-    return new WorkerProcess(this.name, this as any as typeof Worker, options);
-  }
-
-  protected attachEvents() {
-    for (const name in this.selfClass.__workerActions) {
-      this.addActionListeners(name, this.selfClass.__workerActions[name]);
-    }
-  }
-
-  protected addActionListeners(name: string, action: WorkerAction) {
-    if (typeof this[name] !== 'function') {
-      throw new Error(`${name} does not exists on: ${this.selfClass.name}`);
-    }
-    
-    const path = `worker/${this.namespace}/${name}`;
-    ipcRenderer.on(path, async (event, uid, ...args) => {
-      const returnPath = `${path}/${uid}/result`;
-
-      try {
-        const result = await this[name](...args);
-        ipcRenderer.sendTo(this._parentWebContentsId, returnPath, null, result);
-        console.log(`sending to ${returnPath}`, null, result, event.sender)
-      } catch(err) {
-        ipcRenderer.sendTo(this._parentWebContentsId, returnPath, err);
-        console.log(`sending to ${returnPath}`, null, event.sender)
-      }
-    })
-  }
-
-  protected log(...args): void {
-    console.log(...args);
-  }
-}
-
-export function Action(type: WorkerActionType) {
-  return function (
-    target: Worker,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const targetClass = target.constructor as typeof Worker;
-
-    if (!targetClass.hasOwnProperty('__workerActions')) {
-      Object.defineProperty(targetClass, '__workerActions', {
-        value: {},
-        enumerable: false,
-        configurable: false,
-        writable: false,
-      })
-    }
-
-    if (typeof target[propertyKey] !== 'function') return
-    targetClass.__workerActions[propertyKey] = {
-      type,
-    }
-  }
-}
-
-export default Worker;

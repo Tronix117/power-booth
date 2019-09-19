@@ -1,5 +1,4 @@
 import { remote, ipcRenderer } from 'electron'
-import Worker from './lib/worker';
 import workerClasses from './worker';
 
 ipcRenderer.on('ready', (event, { worker: workerSetting } = {}) => {
@@ -8,7 +7,7 @@ ipcRenderer.on('ready', (event, { worker: workerSetting } = {}) => {
     // const workerClass = require(worker.filepath) as any as (new (...args: any[]) => Worker);
     const workerClass = workerClasses[workerSetting.className];
     const worker = (window as any).worker = new workerClass(workerSetting.namespace, workerSetting.parentWebContentsId);
-    // (window as any).console = 
+    console.log('test');
   } else {
     const Vue = require('vue').default;
     const App = require('./views/layouts/App.vue').default;
