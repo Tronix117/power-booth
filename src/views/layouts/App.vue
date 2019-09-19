@@ -27,6 +27,8 @@ import Picture from '@/views/components/Picture.vue';
 import { Camera, closeQuietly } from '@typedproject/gphoto2-driver/src';
 import { Dictionary } from 'vue-router/types/router';
 
+import gpio, { promise as gpiop } from 'rpi-gpio';
+
 import { cameraStore, settingStore } from '@/store';
 
 export enum AppButtonAction {
@@ -80,6 +82,15 @@ export default class App extends Vue {
     this.$el.focus();
     this.$on('action', this.onAction.bind(this));
     // cameraStore.treatLastPicture('/Users/jeremyt/Development/PhotoBooth/power-booth/tmp/1568589121.802.jpg')
+
+    gpiop.setup(7, gpio.DIR_IN, gpio.EDGE_BOTH).then(()=> {
+      gpio.on('change', function(channel, value) {
+        if (value) this.onButtonPressed();
+        else this.onButtonReleased();
+      });
+    }).catch(err => {
+      console.warn('maybe no raspberry PI ?', err);
+    });
   }
 
   onAction(action: AppButtonAction) {
@@ -105,26 +116,14 @@ export default class App extends Vue {
     }
   }
 
-  onKeyDown(e) {
-    if (e.code === "Space" && !this.buttonPressed) {
+  onButtonPressed() {
+    if(!this.buttonPressed) {
       this.currentKeyDownTime = Date.now();
       this.buttonPressed = true
     }
   }
 
-  availableButtonActions() {
-    const actionNames = Object.keys(this.actionsSteps)
-    if (!actionNames.length) return buttonActions;
-    const availableButtonActions: Dictionary<[number, number][]> = {};
-    for (const actionName of actionNames) {
-      availableButtonActions[actionName] = buttonActions[actionName];
-    }
-    return availableButtonActions
-  }
-
-  onKeyUp(e) {
-    if (e.code !== "Space") return;
-    
+  onButtonReleased() {
     this.buttonPressed = false;
     
     const duration = Date.now() - this.currentKeyDownTime;
@@ -163,6 +162,25 @@ export default class App extends Vue {
     this.actionStepResetTimer = setTimeout(() => {
       this.actionsSteps = {};
     }, buttonActionStepResetDuration);
+  }
+
+  onKeyDown(e) {
+    if (e.code === "Space") this.onButtonPressed();
+  }
+
+  availableButtonActions() {
+    const actionNames = Object.keys(this.actionsSteps)
+    if (!actionNames.length) return buttonActions;
+    const availableButtonActions: Dictionary<[number, number][]> = {};
+    for (const actionName of actionNames) {
+      availableButtonActions[actionName] = buttonActions[actionName];
+    }
+    return availableButtonActions
+  }
+
+  onKeyUp(e) {
+    if (e.code !== "Space") return;
+    this.onButtonReleased();
   }
 }
 </script>
