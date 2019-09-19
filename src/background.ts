@@ -37,7 +37,6 @@ function createWindow() {
     // Load the index.html when not in development
     win.loadURL("app://./index.html");
   }
-  win.webContents.openDevTools();
 
   // Hack for worker, unable to find this info
   (global as any).WEBPACK_DEV_SERVER_URL = process.env.WEBPACK_DEV_SERVER_URL
