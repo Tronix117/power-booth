@@ -9,6 +9,8 @@ export default class CameraWorker extends Worker {
 
   camerasInfo: ICamera[];
 
+  liveviewFps: number = 12;
+
   private cameraList: CameraList;
   private cameraSelectRetryTimeout: NodeJS.Timeout;
   private liveview: Liveview;
@@ -84,7 +86,7 @@ export default class CameraWorker extends Worker {
   async takePicture() {
     let hadLiveview = !!this.liveview;
     if (hadLiveview) {
-      this.liveview.stop();
+      await this.stopLiveview();
     }
     
     let picture = null;
@@ -106,12 +108,16 @@ export default class CameraWorker extends Worker {
       break;
     }
 
-    if (hadLiveview) this.liveview.start();
+    if (hadLiveview) this.startLiveview();
     return picture;
   }
 
   @Action
-  async startLiveview(fps) {
+  async startLiveview(fps = this.liveviewFps) {
+    if (fps) {
+      this.liveviewFps = fps;
+    }
+
     if (!this.activeCamera) return;
     this.liveview = this.activeCamera.liveview({
       fps,
