@@ -119,18 +119,22 @@ export default class CameraWorker extends Worker {
     }
 
     if (!this.activeCamera) return;
-    this.liveview = this.activeCamera.liveview({
-      fps,
-      output: 'base64',
-    })
-
-    this.liveview.on('data', (data) => {
-      this.emit('previewPicture', data);
-    })
 
     let failCounter = 0
     while(true) {
       try {
+        if (this.liveview) this.liveview.removeAllListeners('data');
+
+        this.liveview = this.activeCamera.liveview({
+          fps,
+          output: 'base64',
+        })
+    
+        /* @todo memory leak to fix here, prervious liveview is not closed corretly */
+        this.liveview.on('data', (data) => {
+          this.emit('previewPicture', data);
+        })
+
         this.liveview.start();
       } catch(err) {
         // if (err.code === GPCodes.GP_ERROR_CAMERA_BUSY) {
