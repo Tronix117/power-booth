@@ -66,7 +66,6 @@ export class WorkerProcess {
     const url = remote.getGlobal('WEBPACK_DEV_SERVER_URL');
     if (url) {
       this._window.loadURL(url);
-      this._window.webContents.openDevTools();
     } else {
       this._window.loadURL("app://./index.html");
     }
@@ -124,7 +123,7 @@ export class WorkerProcess {
               const pos = this._ipcListenersPathList.indexOf(returnPath);
               if (pos !== -1) this._ipcListenersPathList.splice(pos, 1);
 
-              if (err) reject(err);
+              if (err) reject(new Error(err.message));
               else resolve(result);
             });
             this._ipcListenersPathList.push(returnPath);

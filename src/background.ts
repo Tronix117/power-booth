@@ -21,7 +21,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    fullscreen: false,
+    fullscreen: true,
     kiosk: !isDevelopment,
     webPreferences: {
       nodeIntegration: true

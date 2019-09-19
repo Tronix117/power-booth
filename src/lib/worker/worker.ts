@@ -46,6 +46,8 @@ export abstract class Worker {
     })
 
     this.attachEvents();
+
+    console.info('Started');
   }
 
   protected attachEvents() {
@@ -66,16 +68,10 @@ export abstract class Worker {
       try {
         const result = await this[name](...args);
         ipcRenderer.sendTo(this._parentWebContentsId, returnPath, null, result);
-        console.log(`sending to ${returnPath}`, null, result, event.sender)
       } catch(err) {
-        ipcRenderer.sendTo(this._parentWebContentsId, returnPath, err);
-        console.log(`sending to ${returnPath}`, null, event.sender)
+        ipcRenderer.sendTo(this._parentWebContentsId, returnPath, {message: err.message});
       }
     })
-  }
-
-  protected log(...args): void {
-    console.log(...args);
   }
 }
 
