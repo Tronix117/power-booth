@@ -108,12 +108,12 @@ export default class CameraWorker extends Worker {
       break;
     }
 
-    if (hadLiveview) this.startLiveview();
+    if (hadLiveview) this.startLiveview(this.liveviewFps);
     return picture;
   }
 
   @Action
-  async startLiveview(fps = this.liveviewFps) {
+  async startLiveview(fps) {
     if (fps) {
       this.liveviewFps = fps;
     }
@@ -128,15 +128,25 @@ export default class CameraWorker extends Worker {
       this.emit('previewPicture', data);
     })
 
+    let failCounter = 0
     while(true) {
       try {
         this.liveview.start();
       } catch(err) {
-        if (err.code === GPCodes.GP_ERROR_CAMERA_BUSY) {
+        // if (err.code === GPCodes.GP_ERROR_CAMERA_BUSY) {
+        //   await new Promise((resolve) => setTimeout(resolve, 100));
+        //   continue;
+        // }
+        // throw new Error(err);
+
+        // Sometime we get a -1
+        if (failCounter > 100) {
+          throw new Error(err);
+        } else {
+          failCounter++
           await new Promise((resolve) => setTimeout(resolve, 100));
-          continue;
+          continue 
         }
-        throw new Error(err);
       }
       break;
     }
