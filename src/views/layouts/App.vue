@@ -83,21 +83,22 @@ export default class App extends Vue {
     this.$on('action', this.onAction.bind(this));
     // cameraStore.treatLastPicture('/Users/jeremyt/Development/PhotoBooth/power-booth/tmp/1568589121.802.jpg')
 
-    gpiop.setup(7, gpio.DIR_IN, gpio.EDGE_BOTH)
-      .then(() => gpiop.setup(7, gpio.DIR_IN, gpio.EDGE_BOTH))
-      .then(() => gpiop.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH))
-      .then(() => gpiop.setup(12, gpio.DIR_IN, gpio.EDGE_BOTH))
-      .then(() => gpiop.setup(40, gpio.DIR_IN, gpio.EDGE_BOTH))
-      .then(() => {
-        console.log('listening on some GPIO');
-        gpio.on('change', function(channel, value) {
-          console.log('GPIO: ', channel, value);
-          if (value) this.onButtonPressed();
-          else this.onButtonReleased();
-        });
-      }).catch(err => {
-        console.warn('maybe no raspberry PI ?', err);
-      });
+    this.setupGPIO().catch(err => {
+      console.warn('maybe no raspberry PI ?', err);
+    });
+  }
+
+  async setupGPIO() {
+    gpio.on('change', (channel, value) => {
+      console.log('GPIO: ', channel, value);
+      if (value) this.onButtonPressed();
+      else this.onButtonReleased();
+    });
+    await gpiop.setup(7, gpio.DIR_IN, gpio.EDGE_BOTH)
+    await gpiop.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH)
+    await gpiop.setup(12, gpio.DIR_IN, gpio.EDGE_BOTH)
+    await gpiop.setup(40, gpio.DIR_IN, gpio.EDGE_BOTH)
+    console.log('listening on some GPIO');
   }
 
   onAction(action: AppButtonAction) {
