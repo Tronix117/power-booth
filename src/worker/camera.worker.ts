@@ -1,6 +1,8 @@
 import { Worker, Action, WorkerActionType } from '../lib/worker';
 import { CameraList, ICamera, Camera, Liveview, closeQuietly, GPCodes } from '@typedproject/gphoto2-driver/src';
 
+import { homedir } from 'os';
+
 export default class CameraWorker extends Worker {
   activeCamera: Camera | null = null;
   activeCameraInfo: ICamera;
@@ -89,7 +91,7 @@ export default class CameraWorker extends Worker {
     while(true) {
       try {
         const file = await this.activeCamera.captureImageAsync();
-        const filepath = `/Users/jeremyt/Development/PhotoBooth/power-booth/tmp/${Date.now() / 1000}.jpg`;
+        const filepath = `${homedir()}/img/${Date.now() / 1000}.jpg`;
         await file.saveAsync(filepath);
         const { data } = await file.getDataAndSizeAsync('binary');
         // const buffer = new Buffer(32);
