@@ -1,5 +1,8 @@
 import { WorkerProcess } from './worker-process';
 import { ipcRenderer } from 'electron';
+import { EventEmitter } from 'events';
+import { FunctionPropertyNames, FunctionProperties, ObjectType } from './types';
+import CameraWorker from '@/worker/camera.worker';
 
 export interface WorkerOption {
   namespace?: string;
@@ -7,19 +10,21 @@ export interface WorkerOption {
 
 export enum WorkerActionType {
   Immediate = 'Immediate',
-  Event = 'Event',
+  // Event = 'Event',
 }
 
 export interface WorkerAction {
   type: WorkerActionType,
 }
 
-export abstract class Worker {
+export abstract class Worker extends EventEmitter {
   private readonly namespace;
   private readonly _parentWebContentsId: number;
   static __workerActions: {[actionName: string]: WorkerAction};
 
   constructor(namespace: string, parentWebContentsId: number) {
+    super();
+
     this.namespace = namespace;
     this._parentWebContentsId = parentWebContentsId;
     this.install();
@@ -29,8 +34,31 @@ export abstract class Worker {
     return this.constructor as any
   }
 
-  static create(options: WorkerOption = {}) {
-    return new WorkerProcess(this.name, this as any as typeof Worker, options);
+  static create<T extends Worker>(this: ObjectType<T>, options: WorkerOption = {}) {
+    return new WorkerProcess(
+      this.name,
+      this as any as typeof Worker,
+      options
+    ) as any as WorkerProcess & FunctionProperties<T>;
+  }
+
+  /**
+   * Override emit so we can watch all events and propagate them to the main window.
+   *
+   * @param {(string | symbol)} event
+   * @param {...any[]} args
+   * @returns {boolean}
+   * @override
+   * @memberof Worker
+   */
+  emit(eventName: string | symbol, ...args: any[]): boolean {
+    ipcRenderer.sendTo(
+      this._parentWebContentsId,
+      `worker/${this.namespace}::event`,
+      eventName,
+      ...args
+    );
+    return super.emit(eventName, ...args);
   }
 
   protected install() {
@@ -47,7 +75,13 @@ export abstract class Worker {
 
     this.attachEvents();
 
+    window.addEventListener('beforeunload', () => this.beforeDestroy());
+
     console.info('Started');
+  }
+
+  public beforeDestroy () {
+    // Hook to be implemented in child class
   }
 
   protected attachEvents() {
@@ -61,9 +95,9 @@ export abstract class Worker {
       throw new Error(`${name} does not exists on: ${this.selfClass.name}`);
     }
     
-    const path = `worker/${this.namespace}/${name}`;
+    const path = `worker/${this.namespace}/${name}::call`;
     ipcRenderer.on(path, async (event, uid, ...args) => {
-      const returnPath = `${path}/${uid}/result`;
+      const returnPath = `${path}/${uid}::return`;
 
       try {
         const result = await this[name](...args);
@@ -72,30 +106,6 @@ export abstract class Worker {
         ipcRenderer.sendTo(this._parentWebContentsId, returnPath, {message: err.message});
       }
     })
-  }
-}
-
-export function Action(type: WorkerActionType) {
-  return function (
-    target: Worker,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
-    const targetClass = target.constructor as typeof Worker;
-
-    if (!targetClass.hasOwnProperty('__workerActions')) {
-      Object.defineProperty(targetClass, '__workerActions', {
-        value: {},
-        enumerable: false,
-        configurable: false,
-        writable: false,
-      })
-    }
-
-    if (typeof target[propertyKey] !== 'function') return
-    targetClass.__workerActions[propertyKey] = {
-      type,
-    }
   }
 }
 

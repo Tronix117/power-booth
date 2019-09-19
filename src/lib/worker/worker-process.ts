@@ -1,9 +1,10 @@
 import { remote, BrowserWindow as TBrowserWindow, ipcRenderer } from 'electron';
 import { Worker, WorkerOption, WorkerAction, WorkerActionType } from './worker';
+import { EventEmitter } from 'events';
 const { BrowserWindow } = remote;
 const currentWindow = remote.getCurrentWindow();
 
-export class WorkerProcess {
+export class WorkerProcess extends EventEmitter {
   readonly namespace: string;
 
   private _window: TBrowserWindow;
@@ -12,6 +13,7 @@ export class WorkerProcess {
   private readonly _ipcListenersPathList: string[] = [];
 
   constructor(workerClassName: string, workerClass: typeof Worker, options: WorkerOption = {}) {
+    super();
     this._workerClass = workerClass;
     this._workerClassName = workerClassName;
     this.namespace = options.namespace || this._workerClassName;
@@ -90,6 +92,10 @@ export class WorkerProcess {
       console[name](`\x1b[1m\x1b[46m ❖ ${this.namespace} ❖ `, ...args);
     })
 
+    ipcRenderer.on(`worker/${this.namespace}::event`, (event, eventName: string, ...args) => {
+      this.emit(eventName, ...args);
+    })
+
     for (const name in this._workerClass.__workerActions) {
       this.addAction(name, this._workerClass.__workerActions[name]);
     }
@@ -112,12 +118,12 @@ export class WorkerProcess {
 
   protected handler(name: string, action: WorkerAction, ...args): Promise<any> | void {
     const uid = Math.random().toString(36).substring(2);
-    const path = `worker/${this.namespace}/${name}`;
+    const path = `worker/${this.namespace}/${name}::call`;
     this._window.webContents.send(path, uid, ...args);
 
     switch (action.type) {
       case WorkerActionType.Immediate:
-          const returnPath = `${path}/${uid}/result`;
+          const returnPath = `${path}/${uid}::return`;
           return new Promise((resolve, reject) => {
             ipcRenderer.once(returnPath, (event, err, result) => {
               const pos = this._ipcListenersPathList.indexOf(returnPath);
@@ -129,9 +135,9 @@ export class WorkerProcess {
             this._ipcListenersPathList.push(returnPath);
           });
         break;
-      case WorkerActionType.Event:
-        // this._window.webContents.
-        break;
+      // case WorkerActionType.Event:
+      //   // this._window.webContents.
+      //   break;
     }
   }
 }

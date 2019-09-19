@@ -29,10 +29,6 @@ import { Dictionary } from 'vue-router/types/router';
 
 import { cameraStore, settingStore } from '@/store';
 
-import CameraWorker from '@/worker/camera.worker';
-(window as any).cameraWorker = CameraWorker.create();
-(window as any).CameraWorker = CameraWorker;
-
 export enum AppButtonAction {
   Magic = 'magic',
   Trigger = 'trigger',
@@ -84,12 +80,6 @@ export default class App extends Vue {
     this.$el.focus();
     this.$on('action', this.onAction.bind(this));
     // cameraStore.treatLastPicture('/Users/jeremyt/Development/PhotoBooth/power-booth/tmp/1568589121.802.jpg')
-  }
-
-  destroyed() {
-    if (this.camera) {
-      closeQuietly(this.camera);
-    }
   }
 
   onAction(action: AppButtonAction) {

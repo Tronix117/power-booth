@@ -83,7 +83,7 @@ export default class SettingPanel extends Vue {
   private autodetectInterval: NodeJS.Timeout;
 
   get camerasInfo() {
-    return cameraStore.camerasInfo
+    return cameraStore.camerasInfo || [];
   }
 
   get sections(): SettingPanelSection[] {
@@ -97,7 +97,7 @@ export default class SettingPanel extends Vue {
             title: `${info.id} - ${info.model}`,
             content: info.port,
             action: this.onSelectCamera,
-            enabled: cameraStore.activeCameraId === info.id,
+            enabled: cameraStore.activeCamera && cameraStore.activeCamera.id === info.id,
           }))
         } : { content: 'No camera available'}
       )
