@@ -102,6 +102,16 @@ export default class SettingPanel extends Vue {
         } : { content: 'No camera available'}
       )
     }, {
+      key: 'liveviewFramerate',
+      title: 'Choisir la fréquence de la liveview',
+      items: [
+        { key: '1', title: '1 fps', enabled: settingStore.liveviewFramerate === 1 },
+        { key: '6', title: '6 fps', enabled: settingStore.liveviewFramerate === 6 },
+        { key: '12', title: '12 fps', enabled: settingStore.liveviewFramerate === 12 },
+        { key: '24', title: '24 fps', enabled: settingStore.liveviewFramerate === 24 },
+        { key: '48', title: '48 fps', enabled: settingStore.liveviewFramerate === 48 },
+      ]
+    }, {
       key: 'showLiveview',
       title: 'Afficher liveview',
       items: [
@@ -129,6 +139,10 @@ export default class SettingPanel extends Vue {
       case 'showLiveview':
         console.log(item.key)
         settingStore.changeLiveviewEnabled(item.key === 'yes');
+        this.back();
+        break;
+      case 'liveviewFramerate':
+        settingStore.changeLiveviewFramerate(+item.key);
         this.back();
         break;
     }

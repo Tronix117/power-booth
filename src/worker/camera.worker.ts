@@ -109,10 +109,11 @@ export default class CameraWorker extends Worker {
   }
 
   @Action
-  async startLiveview() {
+  async startLiveview(fps) {
+    if (!this.activeCamera) return;
     this.liveview = this.activeCamera.liveview({
+      fps,
       output: 'base64',
-      fps: 24,
     })
 
     this.liveview.on('data', (data) => {

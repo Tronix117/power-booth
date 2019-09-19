@@ -4,7 +4,7 @@ module.exports = {
   },
   pluginOptions: {
     electronBuilder: {
-      externals: ['@typedproject/gphoto2-driver/lib', '@typedproject/gphoto2-driver', '@typedproject', 'ref', 'ref-napi', 'ffi-napi'],
+      externals: ['@typedproject/gphoto2-driver/lib', '@typedproject/gphoto2-driver', '@typedproject', 'ref', 'ref-napi', 'ffi-napi', 'epoll', 'rpi-gpio'],
       
       chainWebpackMainProcess: config => {
         config.plugin('define').tap(args => {

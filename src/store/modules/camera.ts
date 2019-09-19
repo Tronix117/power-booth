@@ -4,6 +4,8 @@ import { Camera, CameraList, ICamera, closeQuietly, Liveview, GPCodes, PointerOf
 import store from '../store';
 import path from 'path';
 
+import { settingStore } from '..';
+
 // import gm from 'gm';
 // import { readFile } from 'fs';
 
@@ -53,7 +55,7 @@ export default class CameraModule extends VuexModule {
   @Action
   async startLiveview() {
     try {
-      cameraWorker.startLiveview().catch(err => {
+      cameraWorker.startLiveview(settingStore.liveviewFramerate).catch(err => {
         console.error(err);
       })
 
@@ -63,8 +65,17 @@ export default class CameraModule extends VuexModule {
     }
   }
 
+
+  @Action
+  async restartLiveview() {
+    await this.stopLiveview();
+    await this.startLiveview();
+  }
+
+
   @Action
   async stopLiveview() {
+    cameraWorker.removeAllListeners('previewPicture'); //@todo pass correct listener here
     cameraWorker.stopLiveview();
   }
 
