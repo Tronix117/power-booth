@@ -10,7 +10,7 @@ import { settingStore } from '..';
 // import { readFile } from 'fs';
 
 import CameraWorker from '@/worker/camera.worker';
-const cameraWorker = (window as any).cameraWorker = CameraWorker.create();
+const cameraWorker = (window as any).cameraWorker = CameraWorker.create({className: 'CameraWorker'});
 (window as any).CameraWorker = CameraWorker;
 
 @Module({

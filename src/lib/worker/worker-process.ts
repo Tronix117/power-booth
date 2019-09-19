@@ -15,7 +15,7 @@ export class WorkerProcess extends EventEmitter {
   constructor(workerClassName: string, workerClass: typeof Worker, options: WorkerOption = {}) {
     super();
     this._workerClass = workerClass;
-    this._workerClassName = workerClassName;
+    this._workerClassName = options.className || workerClassName;
     this.namespace = options.namespace || this._workerClassName;
     WorkerProcess.attachWorkerToCurrentWindow(this);
     this.createWorkerWindow();
@@ -78,7 +78,6 @@ export class WorkerProcess extends EventEmitter {
           worker: {
             namespace: this.namespace,
             className: this._workerClassName,
-            filepath: `./worker/camera.worker`,
             parentWebContentsId: currentWindow.webContents.id,
           }
         });

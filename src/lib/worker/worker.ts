@@ -6,6 +6,7 @@ import CameraWorker from '@/worker/camera.worker';
 
 export interface WorkerOption {
   namespace?: string;
+  className?: string;
 }
 
 export enum WorkerActionType {

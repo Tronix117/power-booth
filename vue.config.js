@@ -12,9 +12,16 @@ module.exports = {
           return args
         })
       },
+      chainWebpackRendererProcess: config => {
+        console.log(config.toConfig().optimization.minimizer[0].options);
+      },
     
       builderOptions: {
         // options placed here will be merged with default configuration and passed to electron-builder
+        productName: "Power Booth",
+        linux: {
+          target: "AppImage",
+        },
       },
       nodeModulesPath: './node_modules',
       // chainWebpackMainProcess: config => {
