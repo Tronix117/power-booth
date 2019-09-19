@@ -135,6 +135,12 @@ export default class CameraWorker extends Worker {
           this.emit('previewPicture', data);
         })
 
+        this.liveview.on('error', async (err) => {
+          console.log(err);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          this.startLiveview(fps);
+        })
+
         this.liveview.start();
       } catch(err) {
         // if (err.code === GPCodes.GP_ERROR_CAMERA_BUSY) {
