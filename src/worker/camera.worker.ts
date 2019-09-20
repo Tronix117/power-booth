@@ -86,7 +86,7 @@ export default class CameraWorker extends Worker {
   async takePicture() {
     let hadLiveview = !!this.liveview;
     if (hadLiveview) {
-      await this.stopLiveview();
+      await this.stopLiveview(true);
     }
     
     let picture = null;
@@ -113,34 +113,33 @@ export default class CameraWorker extends Worker {
   }
 
   @Action
-  async startLiveview(fps) {
+  async startLiveview(fps, retryCounter = 0) {
     if (fps) {
       this.liveviewFps = fps;
     }
 
     if (!this.activeCamera) return;
 
+    if (!this.liveview) {
+      this.liveview = this.activeCamera.liveview({
+        fps,
+        output: 'base64',
+      })
+      
+      this.liveview.on('data', (data) => {
+        this.emit('previewPicture', data);
+      })
+
+      this.liveview.on('error', async (err) => {
+        console.log(err);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        this.startLiveview(fps, retryCounter + 1);
+      })
+    }
+
     let failCounter = 0
     while(true) {
       try {
-        if (this.liveview) this.liveview.removeAllListeners('data');
-
-        this.liveview = this.activeCamera.liveview({
-          fps,
-          output: 'base64',
-        })
-    
-        /* @todo memory leak to fix here, prervious liveview is not closed corretly */
-        this.liveview.on('data', (data) => {
-          this.emit('previewPicture', data);
-        })
-
-        this.liveview.on('error', async (err) => {
-          console.log(err);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          this.startLiveview(fps);
-        })
-
         this.liveview.start();
       } catch(err) {
         // if (err.code === GPCodes.GP_ERROR_CAMERA_BUSY) {
@@ -151,7 +150,9 @@ export default class CameraWorker extends Worker {
 
         // Sometime we get a -1
         if (failCounter > 100) {
-          throw new Error(err);
+          closeQuietly(this.liveview);
+          this.liveview = null;
+          return this.startLiveview(fps, retryCounter + 1);
         } else {
           failCounter++
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -165,12 +166,14 @@ export default class CameraWorker extends Worker {
   }
 
   @Action
-  async stopLiveview() {
+  async stopLiveview(reuse = false) {
     if (!this.liveview) return;
     this.liveview.stop();
-    this.liveview.removeAllListeners();
-    closeQuietly(this.liveview);
-    this.liveview = null;
+    if(!reuse) {
+      this.liveview.removeAllListeners();
+      closeQuietly(this.liveview);
+      this.liveview = null;
+    }
   }
 
   beforeDestroy() {
