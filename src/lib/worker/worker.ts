@@ -63,13 +63,13 @@ export abstract class Worker extends EventEmitter {
   }
 
   protected install() {
-    // const console = window.console;
+    const console = window.console;
     const { _parentWebContentsId } = this;
     (window as any).console = new Proxy(window.console, {
       get: function(target, name, receiver) {
         return function(...args) {
+          console[name](...args);
           ipcRenderer.sendTo(_parentWebContentsId, 'worker::console', name, ...args);
-          // console[name](...args);
         }
       }
     })
