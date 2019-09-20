@@ -130,10 +130,16 @@ export default class CameraWorker extends Worker {
         this.emit('previewPicture', data);
       })
 
+      let errorCount = 0
       this.liveview.on('error', async (err) => {
         console.log(err);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        this.startLiveview(fps, retryCounter + 1);
+        errorCount++
+        if (errorCount > 100) {
+          this.stopLiveview()
+          console.log('restarting liveview because more than 100 errors on previous instance');
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          this.startLiveview(fps, retryCounter + 1);
+        }
       })
     }
 
